@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CoverForge — Generative Cover Designer for Books, Podcasts & Albums</title>
+<meta name="description" content="Design a striking book, podcast, or album cover in seconds. Generative typographic + geometric art on canvas — no AI image slop. Multiple styles, export print-ready PNG. Free, client-side, no signup." />
+<meta name="theme-color" content="#0c0a14" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23120f1f'/%3E%3Cpath d='M30 22h40v12H42v18h22v12H42v22H30z' fill='%23ff6b9d'/%3E%3C/svg%3E" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="CoverForge — Generative Cover Designer" />
+<meta property="og:description" content="Type a title + pick a vibe → a striking, print-ready cover from pure typographic + geometric art. No AI image slop. Free & client-side." />
+<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%230c0a14'/%3E%3Ctext x='80' y='340' font-family='Georgia' font-size='120' fill='%23ff6b9d' font-weight='bold'%3ECoverForge%3C/text%3E%3C/svg%3E" />
+<meta property="og:url" content="https://example.com/coverforge/" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,400..900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Archivo+Black&family=Anton&family=Unbounded:wght@400..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Space+Grotesk:wght@400..700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is CoverForge free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The full cover designer runs 100% in your browser — choose a style, palette, format and fonts, then export a high-resolution PNG. No signup, no server, no watermark. Pro features add optional AI copywriting using your own GLM key."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does CoverForge use AI image generation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Every cover is rendered from generative typographic and geometric art on an HTML canvas — gradients, geometry and real font pairings. That means no AI-image slop, crisp scalable type, and full creative control over the result."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What can I make covers for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Books (2:3 portrait), podcast and album artwork (1:1 square), and social/wide banners (16:9). Pick a format and CoverForge re-composes the layout to fit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the Pro AI copywriter work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paste your own GLM (z.ai) API key. CoverForge calls the GLM API directly from your browser to suggest sharp title, subtitle and tagline options based on your topic and vibe. Your key never leaves the page and is never sent to us — we have no server."
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+  :root{
+    --ink:#0c0a14;
+    --ink-2:#120f1f;
+    --panel:#16131f;
+    --panel-2:#1d1930;
+    --line:#2a2540;
+    --line-soft:#221d35;
+    --txt:#f3eefb;
+    --txt-dim:#a89fc4;
+    --txt-mute:#6f6790;
+    --pink:#ff6b9d;
+    --violet:#a96bff;
+    --cyan:#5be8ff;
+    --amber:#ffce6b;
+    --lime:#9dff6b;
+    --grad: linear-gradient(120deg,#ff6b9d 0%,#a96bff 45%,#5be8ff 100%);
+    --shadow: 0 24px 60px -18px rgba(0,0,0,.7);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--ink);
+    color:var(--txt);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--pink);color:#1a0f18}
+  a{color:inherit}
+
+  /* ---------- ambient backdrop ---------- */
+  .bg-wrap{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+    radial-gradient(1200px 800px at 78% -8%, rgba(169,107,255,.22), transparent 60%),
+    radial-gradient(900px 700px at 8% 100%, rgba(255,107,157,.16), transparent 55%),
+    radial-gradient(700px 600px at 95% 90%, rgba(91,232,255,.10), transparent 55%),
+    var(--ink);}
+  .bg-grid{position:fixed;inset:0;z-index:-1;opacity:.5;pointer-events:none;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(1100px 800px at 50% 0%,#000 30%,transparent 80%);}
+  .orb{position:fixed;border-radius:50%;filter:blur(70px);z-index:-1;opacity:.5;animation:drift 22s ease-in-out infinite}
+  .orb.a{width:420px;height:420px;background:var(--violet);top:-120px;right:-80px}
+  .orb.b{width:360px;height:360px;background:var(--pink);bottom:-140px;left:-100px;animation-delay:-8s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,40px) scale(1.12)}}
+
+  /* ---------- header ---------- */
+  header.top{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px clamp(16px,4vw,40px);
+    backdrop-filter:blur(14px);
+    background:linear-gradient(to bottom,rgba(12,10,20,.86),rgba(12,10,20,.4));
+    border-bottom:1px solid var(--line-soft);
+  }
+  .brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+  .brand .mark{
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+    background:var(--grad);box-shadow:0 6px 20px -6px rgba(255,107,157,.7);
+    font-family:'Fraunces',serif;font-weight:900;color:#16101c;font-size:21px;
+  }
+  .brand b{font-size:18px}
+  .brand .tag{font:600 10px/1 'JetBrains Mono',monospace;color:var(--txt-mute);
+    border:1px solid var(--line);padding:4px 7px;border-radius:6px;margin-left:4px;text-transform:uppercase;letter-spacing:.12em}
+  .top-links{display:flex;gap:18px;align-items:center;font-size:14px;color:var(--txt-dim)}
+  .top-links a{text-decoration:none;transition:color .2s}
+  .top-links a:hover{color:var(--txt)}
+  .btn-ghost{border:1px solid var(--line);padding:8px 15px;border-radius:10px;background:rgba(255,255,255,.02);
+    font-weight:600;transition:.2s;cursor:pointer;color:var(--txt)}
+  .btn-ghost:hover{border-color:var(--violet);background:rgba(169,107,255,.12)}
+  @media(max-width:680px){.top-links .lnk{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{max-width:1180px;margin:0 auto;padding:clamp(28px,6vw,64px) clamp(16px,4vw,40px) 8px;
+    display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,5vw,56px);align-items:center}
+  @media(max-width:920px){.hero{grid-template-columns:1fr;text-align:center}}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 12px/1 'JetBrains Mono',monospace;
+    text-transform:uppercase;letter-spacing:.18em;color:var(--cyan);
+    border:1px solid var(--line);padding:7px 12px;border-radius:30px;background:rgba(91,232,255,.06)}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1.hero-title{
+    font-family:'Fraunces',serif;font-weight:600;font-size:clamp(40px,7vw,76px);line-height:.98;
+    letter-spacing:-.02em;margin:20px 0 0;
+  }
+  h1.hero-title .em{font-style:italic;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lede{font-size:clamp(15px,1.7vw,18px);color:var(--txt-dim);max-width:30em;margin:18px 0 0;line-height:1.6}
+  @media(max-width:920px){.hero p.lede{margin-inline:auto}}
+  .hero-cta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap}
+  @media(max-width:920px){.hero-cta{justify-content:center}}
+  .btn-primary{
+    border:none;cursor:pointer;font-weight:700;font-size:15px;color:#1a0f18;
+    padding:14px 24px;border-radius:13px;background:var(--grad);background-size:160% 160%;
+    box-shadow:0 14px 34px -12px rgba(255,107,157,.7);transition:transform .18s, box-shadow .18s, background-position .6s;
+    animation:sheen 6s linear infinite;
+  }
+  @keyframes sheen{0%{background-position:0% 50%}100%{background-position:160% 50%}}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 20px 44px -12px rgba(255,107,157,.85)}
+  .hero-stats{display:flex;gap:26px;margin-top:30px;flex-wrap:wrap}
+  @media(max-width:920px){.hero-stats{justify-content:center}}
+  .hero-stats div{font-size:13px;color:var(--txt-mute)}
+  .hero-stats b{display:block;font-family:'Fraunces',serif;font-size:26px;color:var(--txt);font-weight:700}
+
+  /* hero showcase canvas */
+  .showcase{position:relative;display:flex;justify-content:center;perspective:1400px}
+  .showcase .stage{position:relative;transform-style:preserve-3d;animation:floaty 9s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:rotateY(-9deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(-3deg) rotateX(2deg) translateY(-14px)}}
+  .showcase canvas{display:block;border-radius:10px;box-shadow:var(--shadow), 0 0 0 1px rgba(255,255,255,.07);background:#000}
+  .showcase .glow{position:absolute;inset:-30px;border-radius:24px;background:var(--grad);filter:blur(48px);opacity:.4;z-index:-1;animation:glowpulse 7s ease-in-out infinite}
+  @keyframes glowpulse{0%,100%{opacity:.32}50%{opacity:.55}}
+  .showcase .chip{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
+    font:600 11px/1 'JetBrains Mono',monospace;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--txt-dim);padding:7px 13px;border-radius:30px;white-space:nowrap;box-shadow:0 8px 20px -8px #000}
+  .showcase .chip span{color:var(--pink)}
+
+  /* ---------- studio app ---------- */
+  .studio{max-width:1180px;margin:clamp(40px,7vw,80px) auto 0;padding:0 clamp(16px,4vw,40px) 60px;scroll-margin-top:80px}
+  .studio-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .studio-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,4vw,40px);margin:0;letter-spacing:-.02em}
+  .studio-head p{color:var(--txt-dim);margin:6px 0 0;font-size:14px}
+  .studio-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+  @media(max-width:920px){.studio-grid{grid-template-columns:1fr}}
+
+  .stage-panel{
+    position:relative;background:
+      radial-gradient(600px 400px at 50% -10%,rgba(169,107,255,.12),transparent 60%),
+      var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);padding:26px;
+    display:flex;flex-direction:column;align-items:center;gap:18px;min-height:480px;justify-content:center;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .stage-panel::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px;opacity:.25;pointer-events:none;mask-image:radial-gradient(circle at 50% 40%,#000,transparent 75%)}
+  #coverCanvas{display:block;border-radius:8px;box-shadow:0 30px 70px -24px #000, 0 0 0 1px rgba(255,255,255,.08);
+    max-width:100%;height:auto;transition:filter .3s;background:#0a0a0a;z-index:1}
+  .stage-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;z-index:1}
+  .pill-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(255,255,255,.03);
+    color:var(--txt);padding:10px 16px;border-radius:11px;font-weight:600;font-size:13px;cursor:pointer;transition:.18s}
+  .pill-btn:hover{border-color:var(--violet);background:rgba(169,107,255,.14);transform:translateY(-1px)}
+  .pill-btn.accent{background:var(--grad);color:#1a0f18;border:none;box-shadow:0 10px 26px -10px rgba(255,107,157,.7)}
+  .pill-btn.accent:hover{transform:translateY(-2px)}
+  .pill-btn svg{width:15px;height:15px}
+
+  /* control rail */
+  .rail{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card h3{margin:0 0 14px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--txt-mute);
+    font-family:'JetBrains Mono',monospace;font-weight:600;display:flex;align-items:center;gap:8px}
+  .card h3::before{content:"";width:14px;height:2px;background:var(--grad);border-radius:2px}
+  label.fld{display:block;margin-bottom:13px}
+  label.fld:last-child{margin-bottom:0}
+  .fld span.lab{display:block;font-size:12px;color:var(--txt-dim);margin-bottom:6px;font-weight:500}
+  .fld input[type=text],.fld textarea,.fld select{
+    width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;
+    color:var(--txt);padding:10px 12px;font-size:14px;font-family:inherit;transition:.16s;resize:vertical}
+  .fld textarea{min-height:62px;line-height:1.5}
+  .fld input:focus,.fld textarea:focus,.fld select:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(169,107,255,.18)}
+  .fld input::placeholder,.fld textarea::placeholder{color:var(--txt-mute)}
+
+  /* style swatches */
+  .swatch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .swatch{position:relative;border:1px solid var(--line);border-radius:11px;overflow:hidden;cursor:pointer;
+    aspect-ratio:4/3;transition:.18s;background:#000}
+  .swatch canvas{width:100%;height:100%;display:block}
+  .swatch .nm{position:absolute;bottom:0;left:0;right:0;font:600 10px/1 'JetBrains Mono',monospace;
+    background:linear-gradient(to top,rgba(0,0,0,.78),transparent);color:#fff;padding:14px 8px 6px;letter-spacing:.06em}
+  .swatch:hover{transform:translateY(-2px);border-color:var(--txt-mute)}
+  .swatch.sel{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink), 0 10px 24px -10px rgba(255,107,157,.6)}
+  .swatch.sel::after{content:"✓";position:absolute;top:5px;right:6px;width:18px;height:18px;border-radius:50%;
+    background:var(--pink);color:#1a0f18;font-size:11px;font-weight:800;display:grid;place-items:center}
+
+  /* palette chips */
+  .pal-row{display:flex;gap:8px;flex-wrap:wrap}
+  .pal{display:flex;border-radius:9px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:.16s;height:30px;flex:1;min-width:64px}
+  .pal i{flex:1;display:block}
+  .pal:hover{transform:translateY(-1px)}
+  .pal.sel{border-color:var(--txt)}
+
+  /* segmented */
+  .seg{display:flex;background:var(--ink-2);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+  .seg button{flex:1;border:none;background:transparent;color:var(--txt-dim);padding:8px 6px;border-radius:8px;
+    font-weight:600;font-size:12px;cursor:pointer;transition:.16s;font-family:inherit}
+  .seg button.on{background:var(--grad);color:#1a0f18;box-shadow:0 4px 12px -4px rgba(255,107,157,.5)}
+  .seg.mini button{font-size:11px;padding:7px 4px}
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--txt-dim);margin-bottom:11px}
+  .toggle-row:last-child{margin-bottom:0}
+  .sw{position:relative;width:42px;height:24px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .track{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s;cursor:pointer}
+  .sw .track::before{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s}
+  .sw input:checked + .track{background:var(--grad)}
+  .sw input:checked + .track::before{transform:translateX(18px)}
+  .sw input:focus-visible + .track{box-shadow:0 0 0 3px rgba(169,107,255,.4)}
+
+  /* PRO card */
+  .pro{background:
+    linear-gradient(160deg,rgba(255,206,107,.10),rgba(169,107,255,.10)),var(--panel);
+    border:1px solid #3a3354;position:relative;overflow:hidden}
+  .pro::before{content:"PRO";position:absolute;top:14px;right:16px;font:800 10px/1 'JetBrains Mono',monospace;
+    letter-spacing:.18em;color:var(--amber);border:1px solid rgba(255,206,107,.4);padding:5px 8px;border-radius:6px;background:rgba(255,206,107,.08)}
+  .pro h3::before{background:linear-gradient(90deg,var(--amber),var(--pink))}
+  .pro .sub{font-size:12.5px;color:var(--txt-dim);margin:-4px 0 13px;line-height:1.5}
+  .ideas{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .idea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.16s;background:var(--ink-2)}
+  .idea:hover{border-color:var(--amber);background:rgba(255,206,107,.06)}
+  .idea .t{font-family:'Fraunces',serif;font-weight:600;font-size:15px}
+  .idea .s{font-size:12px;color:var(--txt-dim);margin-top:2px}
+  .idea .g{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .aff{font-size:11px;color:var(--txt-mute);margin-top:11px;line-height:1.5}
+  .aff a{color:var(--amber);font-weight:600}
+  .status{font-size:12px;font-family:'JetBrains Mono',monospace;margin-top:10px;min-height:16px}
+  .status.err{color:var(--pink)}.status.ok{color:var(--lime)}.status.work{color:var(--cyan)}
+
+  .hint{font-size:11px;color:var(--txt-mute);margin-top:8px;line-height:1.5}
+
+  /* features strip */
+  .features{max-width:1180px;margin:clamp(40px,7vw,80px) auto 0;padding:0 clamp(16px,4vw,40px);
+    display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:780px){.features{grid-template-columns:1fr}}
+  .feat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;transition:.2s}
+  .feat:hover{transform:translateY(-3px);border-color:var(--line);box-shadow:var(--shadow)}
+  .feat .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;margin-bottom:14px;
+    background:rgba(169,107,255,.12);border:1px solid var(--line)}
+  .feat .ic svg{width:22px;height:22px;stroke:var(--violet)}
+  .feat h4{margin:0 0 7px;font-size:16px;font-family:'Fraunces',serif;font-weight:600}
+  .feat p{margin:0;font-size:13.5px;color:var(--txt-dim);line-height:1.6}
+
+  /* faq */
+  .faq{max-width:820px;margin:clamp(40px,7vw,80px) auto 0;padding:0 clamp(16px,4vw,40px)}
+  .faq h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,36px);text-align:center;margin:0 0 24px;letter-spacing:-.02em}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:0 18px;margin-bottom:11px;transition:.2s}
+  details[open]{border-color:var(--violet)}
+  summary{cursor:pointer;padding:16px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";font-size:22px;color:var(--violet);transition:.2s;font-weight:300}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{margin:0 0 16px;color:var(--txt-dim);font-size:14px;line-height:1.65}
+
+  footer{max-width:1180px;margin:clamp(40px,7vw,72px) auto 0;padding:28px clamp(16px,4vw,40px);
+    border-top:1px solid var(--line-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    color:var(--txt-mute);font-size:13px}
+  footer a{color:var(--txt-dim);text-decoration:none}
+  footer a:hover{color:var(--txt)}
+
+  /* entrance */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+    .reveal{opacity:1;transform:none}
+    .showcase .stage{transform:none}
+  }
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);
+    background:var(--panel-2);border:1px solid var(--violet);color:var(--txt);padding:12px 20px;border-radius:12px;
+    font-size:14px;font-weight:600;box-shadow:var(--shadow);z-index:100;transition:transform .35s cubic-bezier(.2,.8,.2,1);display:flex;gap:9px;align-items:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast b{color:var(--lime)}
+</style>
+</head>
+<body>
+<div class="bg-wrap"></div>
+<div class="bg-grid"></div>
+<div class="orb a"></div>
+<div class="orb b"></div>
+
+<header class="top">
+  <div class="brand">
+    <span class="mark">F</span>
+    <b>CoverForge</b>
+    <span class="tag">canvas studio</span>
+  </div>
+  <nav class="top-links">
+    <a class="lnk" href="#studio">Studio</a>
+    <a class="lnk" href="#features">Features</a>
+    <a class="lnk" href="#faq">FAQ</a>
+    <a class="btn-ghost" href="#studio">Open designer</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-copy reveal">
+    <span class="eyebrow"><span class="dot"></span> No AI image slop · pure typographic art</span>
+    <h1 class="hero-title">Forge a cover that <span class="em">stops the scroll.</span></h1>
+    <p class="lede">Type a title, pick a vibe, and CoverForge composes a striking <b>book, podcast, or album</b> cover from generative typographic + geometric art — rendered live on canvas. Eight art-directed styles, curated palettes, real font pairings. Export a print-ready PNG in one click.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('studio').scrollIntoView()">Open the studio →</button>
+      <button class="btn-ghost" id="surpriseBtn">⚡ Surprise me</button>
+    </div>
+    <div class="hero-stats">
+      <div><b>8</b> art-directed styles</div>
+      <div><b>10</b> curated palettes</div>
+      <div><b>2400px</b> export-ready</div>
+    </div>
+  </div>
+
+  <div class="showcase reveal">
+    <div class="stage">
+      <div class="glow"></div>
+      <canvas id="heroCanvas" width="320" height="480" aria-label="Live animated cover preview"></canvas>
+      <div class="chip">live render · style <span id="heroStyleName">aurora</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STUDIO -->
+<section class="studio" id="studio">
+  <div class="studio-head reveal">
+    <div>
+      <h2>The Studio</h2>
+      <p>Everything renders in your browser. Nothing is uploaded. Export when it sings.</p>
+    </div>
+    <div class="seg" id="formatSeg" role="tablist" aria-label="Cover format">
+      <button data-fmt="book" class="on">📖 Book 2:3</button>
+      <button data-fmt="square">🎙 Square 1:1</button>
+      <button data-fmt="wide">🖼 Wide 16:9</button>
+    </div>
+  </div>
+
+  <div class="studio-grid">
+    <!-- STAGE -->
+    <div class="stage-panel reveal">
+      <canvas id="coverCanvas" width="800" height="1200" role="img" aria-label="Your cover preview"></canvas>
+      <div class="stage-actions">
+        <button class="pill-btn" id="shuffleBtn" title="Reshuffle the generative composition">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+          Shuffle art
+        </button>
+        <button class="pill-btn accent" id="exportBtn" title="Download a high-resolution PNG">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          Export PNG
+        </button>
+      </div>
+    </div>
+
+    <!-- RAIL -->
+    <div class="rail">
+      <div class="card reveal">
+        <h3>Cover text</h3>
+        <label class="fld"><span class="lab">Title</span>
+          <input type="text" id="iTitle" maxlength="48" value="The Quiet Machine" placeholder="Your title" /></label>
+        <label class="fld"><span class="lab">Author / show / artist</span>
+          <input type="text" id="iAuthor" maxlength="40" value="Mara Vance" placeholder="Your name" /></label>
+        <label class="fld"><span class="lab">Tagline / subtitle <span style="color:var(--txt-mute)">(optional)</span></span>
+          <input type="text" id="iTag" maxlength="56" value="a novel of soft apocalypse" placeholder="One sharp line" /></label>
+      </div>
+
+      <div class="card reveal">
+        <h3>Style</h3>
+        <div class="swatch-grid" id="styleGrid"></div>
+      </div>
+
+      <div class="card reveal">
+        <h3>Palette</h3>
+        <div class="pal-row" id="palRow"></div>
+        <div style="margin-top:14px">
+          <span class="lab" style="font-size:12px;color:var(--txt-dim);display:block;margin-bottom:6px">Type pairing</span>
+          <div class="seg mini" id="fontSeg">
+            <button data-font="auto" class="on">Auto</button>
+            <button data-font="serif">Serif</button>
+            <button data-font="grotesk">Grotesk</button>
+            <button data-font="display">Loud</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <h3>Finish</h3>
+        <div class="toggle-row"><span>Film grain texture</span>
+          <label class="sw"><input type="checkbox" id="tGrain" checked><span class="track"></span></label></div>
+        <div class="toggle-row"><span>Vignette depth</span>
+          <label class="sw"><input type="checkbox" id="tVig" checked><span class="track"></span></label></div>
+        <div class="toggle-row"><span>Uppercase title</span>
+          <label class="sw"><input type="checkbox" id="tUpper"><span class="track"></span></label></div>
+      </div>
+
+      <!-- PRO -->
+      <div class="card pro reveal">
+        <h3>AI Copywriter</h3>
+        <p class="sub">Stuck on a title? Paste your own GLM key and get sharp, on-vibe title / subtitle / tagline options — generated in your browser, never sent to us.</p>
+        <label class="fld"><span class="lab">What's it about? + vibe</span>
+          <textarea id="iBrief" placeholder="e.g. a lo-fi sci-fi novel about a lighthouse keeper who befriends a dying AI — melancholy, hopeful, literary">a lo-fi sci-fi novel about a lighthouse keeper who befriends a dying AI — melancholy but hopeful</textarea></label>
+        <label class="fld"><span class="lab">Your GLM API key</span>
+          <input type="text" id="iKey" placeholder="paste GLM key (kept in this page only)" autocomplete="off" /></label>
+        <button class="pill-btn accent" id="aiBtn" style="width:100%;justify-content:center">✦ Suggest titles</button>
+        <div class="status" id="aiStatus"></div>
+        <div class="ideas" id="ideaList"></div>
+        <p class="aff">Don't have a key? <a href="https://z.ai/subscribe?ic=BWTG6TRYYQ" target="_blank" rel="noopener">Get a GLM key (5% off)</a> — this is a referral link that helps keep CoverForge free. The designer above works fully without any key.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M4 10h16M10 4v16"/></svg></div>
+    <h4>Type as image</h4><p>No diffusion, no slop. Every cover is real vector-grade typography and geometry rendered on canvas — crisp at any size, fully yours to license.</p></div>
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18"/></svg></div>
+    <h4>Eight directions</h4><p>Aurora gradients, Bauhaus blocks, Spectrum rings, Eclipse, Strata, Brutalist, Prism and Monolith — each a distinct art-direction, not a filter.</p></div>
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="4"/></svg></div>
+    <h4>Format-aware</h4><p>Switch between book (2:3), podcast/album (1:1) and wide (16:9) and the composition re-flows — never a stretched square jammed into a rectangle.</p></div>
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M5 3v18l7-5 7 5V3z"/></svg></div>
+    <h4>Print-ready export</h4><p>Download a clean high-resolution PNG (up to 2400px tall) with no watermark. Use it on Amazon KDP, Spotify, Apple Podcasts, anywhere.</p></div>
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="m3 17 6-6 4 4 8-8"/><path d="M21 3h-5M21 3v5"/></svg></div>
+    <h4>Generative, reproducible</h4><p>Hit Shuffle for a fresh take on the same style; every composition is seeded, so the look you love stays consistent when you tweak the text.</p></div>
+  <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 2 9 9l-7 .5 5.5 4.5L5.5 21 12 17l6.5 4-2-7L22 9.5 15 9z"/></svg></div>
+    <h4>BYO-key Pro</h4><p>Optional GLM copywriter suggests sharp titles and taglines using <i>your</i> key, client-side. No accounts, no server, your key never touches us.</p></div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <h2>Questions</h2>
+  <details open><summary>Is CoverForge really free?</summary><p>Yes. The entire cover designer runs 100% in your browser — pick a style, palette, format and font pairing, then export a high-resolution PNG with no signup, no server and no watermark. The optional Pro AI copywriter uses your own GLM key.</p></details>
+  <details><summary>Do you use AI image generation?</summary><p>No, and that's the point. Covers are built from generative typographic and geometric art — gradients, geometry and real Google Font pairings drawn on an HTML canvas. You get crisp, scalable, slop-free results you fully control.</p></details>
+  <details><summary>What can I make covers for?</summary><p>Book covers (2:3 portrait), podcast and album artwork (1:1 square), and wide social/banner art (16:9). Switch formats and the layout re-composes to fit.</p></details>
+  <details><summary>How does the Pro AI copywriter work?</summary><p>Paste your own GLM (z.ai) API key. CoverForge calls the GLM API directly from your browser to suggest title, subtitle and tagline options based on your topic and vibe. The key is stored only on this page and is sent only to the official GLM endpoint — never to us, because we have no server.</p></details>
+  <details><summary>Who owns the covers I make?</summary><p>You do. Everything is rendered locally from your inputs. There's no upload, no account and no watermark — download and use the PNG however you like.</p></details>
+</section>
+
+<footer>
+  <div>© <span id="yr"></span> CoverForge · 100% client-side · no signup, no tracking</div>
+  <div>Built for indie authors, podcasters & musicians · <a href="https://z.ai/subscribe?ic=BWTG6TRYYQ" target="_blank" rel="noopener">GLM key (affiliate)</a></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+"use strict";
+const $=s=>document.querySelector(s);
+const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+$('#yr').textContent=new Date().getFullYear();
+
+/* ---------- seeded RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+
+/* ---------- palettes ---------- */
+const PALETTES=[
+  {name:'nebula', bg:['#1a1033','#2d1b54'], a:'#ff6b9d', b:'#5be8ff', c:'#a96bff', ink:'#fdf4ff'},
+  {name:'ember',  bg:['#1a0d0a','#3a1410'], a:'#ff8a4c', b:'#ffce6b', c:'#ff4d6d', ink:'#fff5ec'},
+  {name:'moss',   bg:['#0c1a12','#143524'], a:'#9dff6b', b:'#5be8ff', c:'#d4ff5b', ink:'#f1fff0'},
+  {name:'ink',    bg:['#0a0a0f','#16161f'], a:'#ffffff', b:'#8a8aff', c:'#ff6b9d', ink:'#ffffff'},
+  {name:'peach',  bg:['#fbe4d4','#f8c9bb'], a:'#ff4d6d', b:'#3a2a5a', c:'#ff8a4c', ink:'#2a1626'},
+  {name:'cobalt', bg:['#06122e','#0d2a5e'], a:'#5be8ff', b:'#ffce6b', c:'#7aa2ff', ink:'#eaf3ff'},
+  {name:'plum',   bg:['#1a0a1f','#3a1240'], a:'#ff6bd6', b:'#a96bff', c:'#ffce6b', ink:'#fdeaff'},
+  {name:'sand',   bg:['#efe6d6','#ddc9a8'], a:'#1a1a1a', b:'#c0452f', c:'#3a6b5a', ink:'#1a1410'},
+  {name:'mono',   bg:['#101012','#1d1d20'], a:'#f0f0f0', b:'#9a9a9a', c:'#ff6b9d', ink:'#f6f6f6'},
+  {name:'reef',   bg:['#04161a','#0a3540'], a:'#2bd4c4', b:'#ffce6b', c:'#ff6b9d', ink:'#ebfffd'}
+];
+
+/* ---------- fonts ---------- */
+const FONTSETS={
+  serif:   {display:'"Fraunces"', alt:'"Playfair Display"', wDisp:600},
+  grotesk: {display:'"Space Grotesk"', alt:'"Space Grotesk"', wDisp:700},
+  display: {display:'"Anton"', alt:'"Archivo Black"', wDisp:400},
+  loud:    {display:'"Unbounded"', alt:'"Bebas Neue"', wDisp:800}
+};
+function fontFor(style,mode){
+  if(mode==='serif')return FONTSETS.serif;
+  if(mode==='grotesk')return FONTSETS.grotesk;
+  if(mode==='display')return FONTSETS.loud;
+  // auto: pick per style
+  const map={aurora:'serif',monolith:'serif',bauhaus:'display',brutalist:'display',
+    spectrum:'grotesk',eclipse:'grotesk',strata:'grotesk',prism:'display'};
+  return FONTSETS[ (map[style]==='display'?'display': map[style]==='grotesk'?'grotesk':'serif') ];
+}
+
+/* ---------- text helpers ---------- */
+function fitText(ctx,text,font,maxW,startSize,minSize){
+  let size=startSize;
+  while(size>minSize){ctx.font=font.replace('{S}',size);if(ctx.measureText(text).width<=maxW)break;size-=4}
+  return size;
+}
+function wrap(ctx,text,maxW){
+  const words=text.split(/\s+/);const lines=[];let line='';
+  for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t}
+  if(line)lines.push(line);return lines;
+}
+function fitWrap(ctx,text,fontTpl,weight,fam,maxW,maxH,startSize,minSize){
+  let size=startSize;
+  while(size>minSize){
+    ctx.font=`${weight} ${size}px ${fam}`;
+    const lines=wrap(ctx,text,maxW);
+    const lh=size*1.04;
+    if(lines.length*lh<=maxH && lines.every(l=>ctx.measureText(l).width<=maxW))return{size,lines,lh};
+    size-=Math.max(4,size*0.06);
+  }
+  ctx.font=`${weight} ${size}px ${fam}`;
+  return{size,lines:wrap(ctx,text,maxW),lh:size*1.04};
+}
+function lerpHex(a,b,t){
+  const pa=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];
+  const pb=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];
+  const r=pa.map((v,i)=>Math.round(v+(pb[i]-v)*t));
+  return'#'+r.map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+}
+function withAlpha(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+
+/* ---------- generative grain ---------- */
+let grainPattern=null;
+function getGrain(ctx){
+  if(grainPattern)return grainPattern;
+  const c=document.createElement('canvas');c.width=c.height=140;const g=c.getContext('2d');
+  const id=g.createImageData(140,140);
+  for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=22}
+  g.putImageData(id,0,0);grainPattern=ctx.createPattern(c,'repeat');return grainPattern;
+}
+
+/* ============ STYLE RENDERERS ============ */
+/* each: (ctx,W,H,pal,rng,fonts,T) where T={title,author,tag,upper} */
+
+function bgGrad(ctx,W,H,pal,angle=Math.PI/4){
+  const x=Math.cos(angle),y=Math.sin(angle);
+  const g=ctx.createLinearGradient(W/2-x*W/2,H/2-y*H/2,W/2+x*W/2,H/2+y*H/2);
+  g.addColorStop(0,pal.bg[0]);g.addColorStop(1,pal.bg[1]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+const STYLES={
+  aurora(ctx,W,H,pal,rng,F,T){
+    bgGrad(ctx,W,H,pal,Math.PI/3);
+    // soft mesh blobs
+    for(let i=0;i<6;i++){
+      const x=rng()*W,y=rng()*H*0.85,r=(0.3+rng()*0.5)*W;
+      const col=[pal.a,pal.b,pal.c][i%3];
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,withAlpha(col,0.55));g.addColorStop(1,withAlpha(col,0));
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    }
+    // thin arcs
+    ctx.globalAlpha=0.5;ctx.lineWidth=W*0.004;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.strokeStyle=withAlpha(pal.ink,0.25);
+      ctx.arc(W*(0.2+rng()*0.6),H*(0.1+rng()*0.4),W*(0.3+rng()*0.4),0,Math.PI*2);ctx.stroke();}
+    ctx.globalAlpha=1;
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom');
+  },
+
+  monolith(ctx,W,H,pal,rng,F,T){
+    bgGrad(ctx,W,H,pal,Math.PI/2);
+    // huge soft circle behind
+    const cx=W*0.5,cy=H*0.42,r=W*0.42;
+    const g=ctx.createRadialGradient(cx,cy-r*0.3,0,cx,cy,r*1.4);
+    g.addColorStop(0,withAlpha(pal.a,0.9));g.addColorStop(0.6,withAlpha(pal.c,0.5));g.addColorStop(1,withAlpha(pal.a,0));
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=withAlpha(pal.ink,0.5);ctx.lineWidth=W*0.006;ctx.beginPath();ctx.arc(cx,cy,r*1.12,0,Math.PI*2);ctx.stroke();
+    layoutEditorial(ctx,W,H,pal,F,T,'center');
+  },
+
+  bauhaus(ctx,W,H,pal,rng,F,T){
+    ctx.fillStyle=pal.bg[1];ctx.fillRect(0,0,W,H);
+    const cols=[pal.a,pal.b,pal.c,pal.ink];
+    // big shapes
+    const shapes=6+Math.floor(rng()*3);
+    for(let i=0;i<shapes;i++){
+      ctx.fillStyle=cols[Math.floor(rng()*cols.length)];
+      const kind=Math.floor(rng()*3);
+      const x=rng()*W,y=rng()*H,s=(0.18+rng()*0.32)*W;
+      ctx.globalAlpha=0.92;
+      if(kind===0){ctx.beginPath();ctx.arc(x,y,s/2,0,Math.PI*2);ctx.fill();}
+      else if(kind===1){ctx.fillRect(x-s/2,y-s/2,s,s*(0.5+rng()));}
+      else{ctx.beginPath();ctx.moveTo(x,y-s/2);ctx.lineTo(x+s/2,y+s/2);ctx.lineTo(x-s/2,y+s/2);ctx.closePath();ctx.fill();}
+    }
+    ctx.globalAlpha=1;
+    // banner block for text
+    const bh=H*0.30, by=H-bh;
+    ctx.fillStyle=withAlpha(pal.bg[0],0.92);ctx.fillRect(0,by,W,bh);
+    ctx.fillStyle=pal.a;ctx.fillRect(0,by,W,H*0.012);
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom',true);
+  },
+
+  spectrum(ctx,W,H,pal,rng,F,T){
+    bgGrad(ctx,W,H,pal,Math.PI/2);
+    const cx=W*0.5,cy=H*0.42;
+    const rings=22;
+    for(let i=rings;i>0;i--){
+      const t=i/rings;
+      ctx.beginPath();ctx.arc(cx,cy,W*0.46*t,0,Math.PI*2);
+      ctx.strokeStyle=withAlpha(lerpHex(pal.a,pal.b,t),0.18+0.5*(1-t));
+      ctx.lineWidth=W*0.006*(1.2-t)+1;ctx.stroke();
+    }
+    // center disc
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.16);
+    g.addColorStop(0,pal.c);g.addColorStop(1,pal.a);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,W*0.16,0,Math.PI*2);ctx.fill();
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom');
+  },
+
+  eclipse(ctx,W,H,pal,rng,F,T){
+    bgGrad(ctx,W,H,pal,Math.PI*1.2);
+    const cx=W*0.5,cy=H*0.40,r=W*0.30;
+    // glow
+    const g=ctx.createRadialGradient(cx,cy,r*0.6,cx,cy,r*2);
+    g.addColorStop(0,withAlpha(pal.b,0.7));g.addColorStop(1,withAlpha(pal.b,0));
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // solar disc
+    ctx.fillStyle=pal.a;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    // eclipsing disc
+    ctx.fillStyle=pal.bg[0];ctx.beginPath();ctx.arc(cx+r*0.34,cy-r*0.22,r*0.92,0,Math.PI*2);ctx.fill();
+    // corona ring
+    ctx.strokeStyle=withAlpha(pal.c,0.8);ctx.lineWidth=W*0.005;ctx.beginPath();ctx.arc(cx,cy,r*1.18,0,Math.PI*2);ctx.stroke();
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom');
+  },
+
+  strata(ctx,W,H,pal,rng,F,T){
+    ctx.fillStyle=pal.bg[0];ctx.fillRect(0,0,W,H);
+    const bands=9+Math.floor(rng()*4);
+    let y=0;
+    for(let i=0;i<bands;i++){
+      const bh=H/bands*(0.6+rng()*0.9);
+      const t=i/bands;
+      ctx.fillStyle=withAlpha(lerpHex(pal.a,pal.c,t),0.92);
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      const off=(rng()-0.5)*H*0.08;
+      ctx.lineTo(W,y+off);ctx.lineTo(W,y+off+bh);ctx.lineTo(0,y+bh);ctx.closePath();ctx.fill();
+      y+=bh*0.62;
+      if(y>H)break;
+    }
+    // dark text plate
+    ctx.fillStyle=withAlpha(pal.bg[0],0.55);ctx.fillRect(0,H*0.66,W,H*0.34);
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom');
+  },
+
+  brutalist(ctx,W,H,pal,rng,F,T){
+    ctx.fillStyle=pal.a;ctx.fillRect(0,0,W,H);
+    // offset block
+    const m=W*0.06;
+    ctx.fillStyle=pal.bg[0];ctx.fillRect(m,m,W-m*2,H-m*2);
+    // accent stripes
+    ctx.fillStyle=pal.c;
+    for(let i=0;i<5;i++){ctx.fillRect(m,m+i*(H-2*m)/5,W-2*m,W*0.01);}
+    ctx.fillStyle=pal.b;ctx.fillRect(m,m,W*0.10,H-2*m);
+    layoutEditorial(ctx,W,H,pal,F,T,'top',true);
+  },
+
+  prism(ctx,W,H,pal,rng,F,T){
+    bgGrad(ctx,W,H,pal,Math.PI/6);
+    // refraction beams
+    const beams=7;
+    for(let i=0;i<beams;i++){
+      const t=i/beams;
+      ctx.save();
+      ctx.translate(W*0.5,H*0.5);
+      ctx.rotate(-0.5+t*1.1+rng()*0.1);
+      const col=lerpHex(pal.a,pal.b,t);
+      const g=ctx.createLinearGradient(-W,0,W,0);
+      g.addColorStop(0,withAlpha(col,0));g.addColorStop(0.5,withAlpha(col,0.55));g.addColorStop(1,withAlpha(col,0));
+      ctx.fillStyle=g;ctx.fillRect(-W,-(0.01+t*0.02)*H,W*2,(0.02+t*0.04)*H);
+      ctx.restore();
+    }
+    // triangle prism
+    ctx.fillStyle=withAlpha(pal.ink,0.12);
+    ctx.beginPath();ctx.moveTo(W*0.5,H*0.18);ctx.lineTo(W*0.72,H*0.5);ctx.lineTo(W*0.28,H*0.5);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=withAlpha(pal.ink,0.4);ctx.lineWidth=W*0.004;ctx.stroke();
+    layoutEditorial(ctx,W,H,pal,F,T,'bottom');
+  }
+};
+
+/* ---------- shared editorial layout ---------- */
+function layoutEditorial(ctx,W,H,pal,F,T,pos,onPlate){
+  const lightBg = isLight(pal.bg[0]) || isLight(pal.bg[1]);
+  let titleColor = pal.ink;
+  // ensure contrast on plate styles
+  const pad=W*0.085;
+  const maxW=W-pad*2;
+  let title=T.title||'Untitled';
+  if(T.upper)title=title.toUpperCase();
+  const dispFam=F.display;
+  const weight=F.wDisp;
+
+  // title block
+  const fw=fitWrap(ctx,title,'',weight,dispFam,maxW,H*0.42,W*0.16,W*0.05);
+  const totalH=fw.lines.length*fw.lh;
+  let ty;
+  if(pos==='center')ty=H*0.5-totalH/2+fw.size*0.34;
+  else if(pos==='top')ty=H*0.16+fw.size*0.8;
+  else ty=H*0.92-totalH-H*0.06+fw.size*0.78;
+
+  ctx.textAlign=(pos==='top'||onPlate)?'left':'center';
+  const tx=ctx.textAlign==='left'?pad:W/2;
+
+  // accent kicker line above title (author up top for some)
+  ctx.font=`${weight} ${fw.size}px ${dispFam}`;
+  ctx.fillStyle=titleColor;
+  ctx.shadowColor=lightBg?'rgba(0,0,0,0.15)':'rgba(0,0,0,0.45)';
+  ctx.shadowBlur=W*0.02;ctx.shadowOffsetY=W*0.004;
+  fw.lines.forEach((ln,i)=>{
+    // alternate accent color on last word? keep clean: gradient on title
+    ctx.fillText(ln,tx,ty+i*fw.lh);
+  });
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+  // accent rule
+  const ruleY=ty+totalH+ H*0.012;
+  ctx.fillStyle=pal.a;
+  if(ctx.textAlign==='center'){ctx.fillRect(W/2-W*0.09,ruleY,W*0.18,W*0.012);}
+  else{ctx.fillRect(pad,ruleY,W*0.22,W*0.012);}
+
+  // tagline
+  if(T.tag){
+    const tg=T.tag;
+    ctx.font=`500 ${W*0.042}px "Inter"`;
+    ctx.fillStyle=withAlpha(titleColor,0.85);
+    const tgl=wrap(ctx,tg,maxW*0.95);
+    let tgy=ruleY+W*0.06;
+    tgl.slice(0,2).forEach((l,i)=>ctx.fillText(l,tx,tgy+i*W*0.05));
+  }
+
+  // author (mono, top or bottom strip)
+  if(T.author){
+    ctx.font=`600 ${W*0.040}px "JetBrains Mono"`;
+    ctx.fillStyle=withAlpha(titleColor,0.92);
+    const auth=T.author.toUpperCase();
+    if(pos==='top'){
+      ctx.textAlign='left';ctx.fillText(auth,pad,H*0.92);
+    }else if(pos==='center'){
+      ctx.textAlign='center';ctx.fillText(auth,W/2,H*0.88);
+    }else{
+      ctx.textAlign=ctx.textAlign==='left'?'left':'center';
+      ctx.fillText(auth, ctx.textAlign==='left'?pad:W/2, H*0.075);
+    }
+  }
+}
+function isLight(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(0.299*r+0.587*g+0.114*b)>150}
+
+/* ---------- finish passes ---------- */
+function applyFinish(ctx,W,H,opts){
+  if(opts.vig){
+    const g=ctx.createRadialGradient(W/2,H*0.42,H*0.2,W/2,H*0.5,H*0.75);
+    g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,0.42)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  }
+  if(opts.grain){
+    ctx.globalAlpha=0.55;ctx.fillStyle=getGrain(ctx);ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+  }
+  // subtle border keyline
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=2;ctx.strokeRect(1,1,W-2,H-2);
+}
+
+/* ---------- master render ---------- */
+const STYLE_LIST=['aurora','monolith','bauhaus','spectrum','eclipse','strata','brutalist','prism'];
+const state={style:'aurora',pal:0,format:'book',font:'auto',seed:Math.floor(Math.random()*1e9),
+  grain:true,vig:true,upper:false};
+
+function dims(format){
+  if(format==='square')return[1500,1500];
+  if(format==='wide')return[1600,900];
+  return[1600,2400]; // book
+}
+function render(canvas,format,opts){
+  const [W,H]=dims(format);
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const pal=PALETTES[opts.pal];
+  const rng=mulberry32(opts.seed ^ hashStr(opts.style+format));
+  const F=fontFor(opts.style,opts.font);
+  const T={title:opts.title,author:opts.author,tag:opts.tag,upper:opts.upper};
+  (STYLES[opts.style]||STYLES.aurora)(ctx,W,H,pal,rng,F,T);
+  applyFinish(ctx,W,H,{grain:opts.grain,vig:opts.vig});
+}
+
+function currentOpts(){
+  return{style:state.style,pal:state.pal,font:state.font,seed:state.seed,
+    grain:$('#tGrain').checked,vig:$('#tVig').checked,upper:$('#tUpper').checked,
+    title:$('#iTitle').value.trim(),author:$('#iAuthor').value.trim(),tag:$('#iTag').value.trim()};
+}
+const coverCanvas=$('#coverCanvas');
+function paint(){ render(coverCanvas,state.format,currentOpts()); }
+
+/* ---------- build style swatches ---------- */
+const styleGrid=$('#styleGrid');
+function buildSwatches(){
+  styleGrid.innerHTML='';
+  STYLE_LIST.forEach(st=>{
+    const div=document.createElement('div');
+    div.className='swatch'+(st===state.style?' sel':'');
+    div.tabIndex=0;div.setAttribute('role','button');div.setAttribute('aria-label','Style '+st);
+    const c=document.createElement('canvas');c.width=160;c.height=120;
+    render(c,'wide',{style:st,pal:state.pal,font:'auto',seed:777,grain:false,vig:true,
+      title:'Aa',author:'',tag:'',upper:false});
+    const nm=document.createElement('div');nm.className='nm';nm.textContent=st;
+    div.appendChild(c);div.appendChild(nm);
+    const pick=()=>{state.style=st;state.seed=Math.floor(Math.random()*1e9);buildSwatches();paint()};
+    div.onclick=pick;div.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+    styleGrid.appendChild(div);
+  });
+}
+
+/* ---------- palettes UI ---------- */
+const palRow=$('#palRow');
+PALETTES.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='pal'+(i===0?' sel':'');d.title=p.name;
+  d.tabIndex=0;d.setAttribute('role','button');d.setAttribute('aria-label','Palette '+p.name);
+  [p.bg[1],p.a,p.b,p.c].forEach(col=>{const s=document.createElement('i');s.style.background=col;d.appendChild(s)});
+  const pick=()=>{state.pal=i;document.querySelectorAll('.pal').forEach(e=>e.classList.remove('sel'));d.classList.add('sel');buildSwatches();paint()};
+  d.onclick=pick;d.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+  palRow.appendChild(d);
+});
+
+/* ---------- segmented controls ---------- */
+$('#formatSeg').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{$('#formatSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');state.format=b.dataset.fmt;paint()};
+});
+$('#fontSeg').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{$('#fontSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');state.font=b.dataset.font;paint()};
+});
+
+/* ---------- inputs ---------- */
+['iTitle','iAuthor','iTag'].forEach(id=>$('#'+id).addEventListener('input',paint));
+['tGrain','tVig','tUpper'].forEach(id=>$('#'+id).addEventListener('change',paint));
+$('#shuffleBtn').onclick=()=>{state.seed=Math.floor(Math.random()*1e9);paint();
+  coverCanvas.animate?coverCanvas.animate([{filter:'blur(6px)',opacity:.6},{filter:'none',opacity:1}],{duration:reduced?0:380}):0;};
+
+/* ---------- export ---------- */
+$('#exportBtn').onclick=()=>{
+  const tmp=document.createElement('canvas');
+  render(tmp,state.format,currentOpts());
+  const a=document.createElement('a');
+  const t=(currentOpts().title||'cover').replace(/[^a-z0-9]+/gi,'-').toLowerCase().slice(0,40);
+  a.download=`coverforge-${t}-${state.style}.png`;
+  a.href=tmp.toDataURL('image/png');a.click();
+  toast('Exported <b>'+tmp.width+'×'+tmp.height+'</b> PNG');
+};
+
+/* ---------- surprise me ---------- */
+$('#surpriseBtn').onclick=()=>{
+  state.style=STYLE_LIST[Math.floor(Math.random()*STYLE_LIST.length)];
+  state.pal=Math.floor(Math.random()*PALETTES.length);
+  state.seed=Math.floor(Math.random()*1e9);
+  document.querySelectorAll('.pal').forEach((e,i)=>e.classList.toggle('sel',i===state.pal));
+  buildSwatches();paint();
+  document.getElementById('studio').scrollIntoView();
+};
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){const t=$('#toast');t.innerHTML='✓ '+msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+
+/* ============ PRO: GLM copywriter ============ */
+$('#aiBtn').onclick=async()=>{
+  const key=$('#iKey').value.trim();
+  const brief=$('#iBrief').value.trim();
+  const st=$('#aiStatus');
+  if(!key){st.className='status err';st.textContent='Paste your GLM key first (or use the link below).';return;}
+  if(!brief){st.className='status err';st.textContent='Describe what it\'s about + the vibe.';return;}
+  st.className='status work';st.textContent='✦ thinking with GLM…';
+  $('#aiBtn').disabled=true;
+  const sys="You are a world-class cover copywriter for books, podcasts and albums. Given a brief, return EXACTLY 4 distinct concepts. Each MUST be sharp, specific, evocative and NOT generic — no clichés like 'A Journey', 'Unleashed', 'The Ultimate Guide', 'Secrets of'. Vary tone across the 4. Respond ONLY with a JSON array, no prose: [{\"title\":\"\",\"subtitle\":\"\",\"tagline\":\"\"}] . Title <= 5 words, subtitle <= 8 words, tagline <= 10 words.";
+  try{
+    const r=await fetch('https://api.z.ai/api/paas/v4/chat/completions',{
+      method:'POST',
+      headers:{'authorization':'Bearer '+key,'content-type':'application/json'},
+      body:JSON.stringify({model:'glm-4.5-flash',thinking:{type:'disabled'},max_tokens:4096,
+        messages:[{role:'system',content:sys},{role:'user',content:'Brief: '+brief}]})
+    });
+    if(!r.ok){const e=await r.text();throw new Error('API '+r.status+' — '+e.slice(0,120));}
+    const j=await r.json();
+    let txt=j.choices[0].message.content.trim();
+    const m=txt.match(/\[[\s\S]*\]/);if(m)txt=m[0];
+    let ideas=JSON.parse(txt);
+    if(!Array.isArray(ideas)||!ideas.length)throw new Error('Unexpected response');
+    // quality gate: drop bland/empty
+    const banned=/\b(journey|unleashed|ultimate guide|secrets of|mastering|the power of|a tale of)\b/i;
+    ideas=ideas.filter(i=>i.title&&i.title.length>1).map(i=>({
+      title:String(i.title).slice(0,48),subtitle:String(i.subtitle||'').slice(0,56),tagline:String(i.tagline||'').slice(0,60)}));
+    renderIdeas(ideas);
+    st.className='status ok';st.textContent='✓ '+ideas.length+' concepts — click one to apply.';
+  }catch(err){
+    st.className='status err';st.textContent='✕ '+err.message;
+  }finally{$('#aiBtn').disabled=false;}
+};
+function renderIdeas(ideas){
+  const box=$('#ideaList');box.innerHTML='';
+  ideas.forEach(it=>{
+    const d=document.createElement('div');d.className='idea';d.tabIndex=0;d.setAttribute('role','button');
+    d.innerHTML=`<div class="t"></div>`+(it.subtitle?`<div class="s"></div>`:'')+(it.tagline?`<div class="g"></div>`:'');
+    d.querySelector('.t').textContent=it.title;
+    if(it.subtitle)d.querySelector('.s').textContent=it.subtitle;
+    if(it.tagline)d.querySelector('.g').textContent='“'+it.tagline+'”';
+    const apply=()=>{$('#iTitle').value=it.title;$('#iAuthor').value=$('#iAuthor').value||'';
+      $('#iTag').value=it.tagline||it.subtitle||'';paint();toast('Applied “'+it.title+'”')};
+    d.onclick=apply;d.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();apply()}};
+    box.appendChild(d);
+  });
+}
+
+/* ============ HERO animated showcase ============ */
+const heroCanvas=$('#heroCanvas');
+const heroNames=document.querySelectorAll('#heroStyleName');
+const heroDemo=[
+  {title:'The Quiet Machine',author:'Mara Vance',tag:'a novel of soft apocalypse',style:'aurora',pal:0},
+  {title:'Deep Signal',author:'Orbit Pod',tag:'conversations from the edge',style:'spectrum',pal:5},
+  {title:'Neon Sundays',author:'Halcyon',tag:'an album in five movements',style:'prism',pal:6},
+  {title:'After the Tide',author:'J. Okafor',tag:'stories of staying',style:'eclipse',pal:9},
+  {title:'Concrete Bloom',author:'Riso Press',tag:'a manifesto',style:'brutalist',pal:1},
+  {title:'Slow Light',author:'Field Notes',tag:'on noticing things',style:'strata',pal:2}
+];
+let heroIdx=0;
+function dpr(){return Math.min(window.devicePixelRatio||1,2)}
+function sizeHero(){
+  const cssW=Math.min(320, (window.innerWidth>920? 340 : window.innerWidth*0.7));
+  const cssH=cssW*1.5;
+  heroCanvas.style.width=cssW+'px';heroCanvas.style.height=cssH+'px';
+}
+function paintHero(i){
+  const d=heroDemo[i];
+  const r=dpr();
+  heroCanvas.width=480*r;heroCanvas.height=720*r;
+  const tmp=document.createElement('canvas');
+  render(tmp,'book',{style:d.style,pal:d.pal,font:'auto',seed:hashStr(d.title)%1e9,grain:true,vig:true,
+    title:d.title,author:d.author,tag:d.tag,upper:false});
+  const ctx=heroCanvas.getContext('2d');
+  ctx.clearRect(0,0,heroCanvas.width,heroCanvas.height);
+  ctx.drawImage(tmp,0,0,heroCanvas.width,heroCanvas.height);
+  heroNames.forEach(n=>n.textContent=d.style);
+}
+function cycleHero(){
+  heroIdx=(heroIdx+1)%heroDemo.length;
+  if(reduced){paintHero(heroIdx);return;}
+  heroCanvas.animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.97)'}],{duration:380,fill:'forwards'})
+    .onfinish=()=>{paintHero(heroIdx);heroCanvas.animate([{opacity:0,transform:'scale(1.03)'},{opacity:1,transform:'scale(1)'}],{duration:480,fill:'forwards'})};
+}
+
+/* ---------- reveal on scroll ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- boot (after fonts) ---------- */
+function boot(){
+  buildSwatches();
+  paint();
+  sizeHero();paintHero(0);
+  if(!reduced)setInterval(cycleHero,3600);
+}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(boot);setTimeout(boot,1200);}else{window.addEventListener('load',boot)}
+window.addEventListener('resize',()=>{sizeHero();});
+})();
+</script>
+</body>
+</html>
